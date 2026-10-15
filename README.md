@@ -1,45 +1,47 @@
-# Markdown a PDF (Mermaid)
+# Markdown to PDF (Mermaid)
 
-Exporta el `.md` abierto a PDF, dibujando los diagramas Mermaid, con el Edge o Chrome ya instalado.
+Exports the open `.md` file to PDF, rendering Mermaid diagrams, using the Edge or Chrome you already have installed.
 
-## Uso
+## Usage
 
-Con un `.md` abierto:
+With a `.md` file open:
 
-- Botón del PDF en la barra de título del editor.
-- Clic derecho en el editor o en el explorador, `Markdown a PDF: Exportar`.
+- PDF button in the editor title bar.
+- Right-click in the editor or in the explorer, `Markdown a PDF: Exportar`.
 - `Ctrl+Shift+P`, `Markdown a PDF: Exportar`.
-- Atajo propio: en `keybindings.json` agregar
+- Your own shortcut: add this to `keybindings.json`:
   `{ "key": "ctrl+alt+p", "command": "mdAPdf.export", "when": "editorLangId == markdown" }`.
 
-El PDF queda al lado del `.md`, con el mismo nombre.
+The PDF is written next to the `.md`, with the same name.
 
-## Requisitos
+The command and the messages it shows are in Spanish for now.
 
-- Python 3 con la librería `markdown` (`pip install markdown`).
-- Microsoft Edge o Google Chrome.
-- Internet (Mermaid y la fuente se cargan desde jsdelivr).
+## Requirements
 
-## Ajustes
+- Python 3 with the `markdown` library (`pip install markdown`).
+- Microsoft Edge or Google Chrome.
+- Internet access (Mermaid and the font are loaded from jsdelivr).
 
-| Ajuste | Para qué |
+## Settings
+
+| Setting | What it does |
 |---|---|
-| `mdAPdf.layout` | `auto` (default): una página alta si hay diagramas, A4 si no. `tall` o `a4` fuerzan una. |
-| `mdAPdf.pythonPath` | Ejecutable de Python si no está en el PATH. |
-| `mdAPdf.browserPath` | Ruta a `msedge.exe` o `chrome.exe` si no lo detecta. |
-| `mdAPdf.openAfterExport` | Ofrecer abrir el PDF al terminar. |
+| `mdAPdf.layout` | `auto` (default): one tall page if there are diagrams, A4 otherwise. `tall` or `a4` force one. |
+| `mdAPdf.pythonPath` | Python executable, if it is not in the PATH. |
+| `mdAPdf.browserPath` | Path to `msedge.exe` or `chrome.exe`, if it is not detected. |
+| `mdAPdf.openAfterExport` | Offer to open the PDF when it is done. |
 
-## Empaquetar e instalar
+## Package and install
 
-El `.vsix` no se versiona: se arma con el script (no necesita Node ni vsce).
+The `.vsix` is not versioned. Build it with the script (it needs neither Node nor vsce):
 
 ```
 python build_vsix.py
 code --install-extension md-a-pdf-1.0.0.vsix --force
 ```
 
-Después, `Developer: Reload Window`.
+Then run `Developer: Reload Window`.
 
-## Licencia
+## License
 
 MIT
