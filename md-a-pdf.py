@@ -5,6 +5,7 @@ Usage:
     python md-a-pdf.py file.md [output.pdf] [--a4 | --tall]
 
 - ```mermaid blocks are rendered (Mermaid is loaded from jsdelivr: internet access required).
+- Code blocks with a language (```c, ```json...) get syntax highlighting (highlight.js, also from jsdelivr).
 - Default (auto): if the .md has diagrams it produces ONE single page as tall as the content, so they are
   not split; otherwise A4 pages. --a4 or --tall force one or the other.
 - The YAML front-matter (--- ... ---) of the .md is ignored.
@@ -25,9 +26,11 @@ except ImportError:
     sys.exit("The markdown library is missing. Install it with: pip install markdown")
 
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs"
-FONT_CSS_URLS = [
+HIGHLIGHT_URL = "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/es/highlight.min.js"
+STYLESHEET_URLS = [
     "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5/400.css",
     "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5/700.css",
+    "https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css",
 ]
 PAGE_WIDTH_PX = 1200
 
@@ -42,6 +45,7 @@ CSS = """
   pre:not(.mermaid) { background: #f5f5f5; padding: 10px; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
   code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 90%; }
   pre code { background: none; padding: 0; }
+  pre code.hljs { background: transparent; padding: 0; }
   table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
   th, td { border: 1px solid #bbb; padding: 6px 10px; text-align: left; vertical-align: top; }
   th { background: #f0f0f0; }
@@ -101,7 +105,7 @@ def build_html(body, a4):
   style.textContent = '@page { size: %dpx ' + h + 'px; margin: 0; }';
   document.head.appendChild(style);
 """ % PAGE_WIDTH_PX
-    fonts = "".join(f'<link rel="stylesheet" href="{url}">' for url in FONT_CSS_URLS)
+    fonts = "".join(f'<link rel="stylesheet" href="{url}">' for url in STYLESHEET_URLS)
     return f"""<!doctype html>
 <html lang="es"><head><meta charset="utf-8">{fonts}
 <style>{CSS}{body_css}{page_css}</style></head><body>
@@ -110,6 +114,13 @@ def build_html(body, a4):
   import mermaid from '{MERMAID_URL}';
   mermaid.initialize({{ startOnLoad: false, fontFamily: "'Open Sans', sans-serif" }});
   await document.fonts.ready;
+  try {{
+    // Only blocks with a language (```c, ```json...) are colored; plain blocks stay as they are
+    const {{ default: hljs }} = await import('{HIGHLIGHT_URL}');
+    document.querySelectorAll('pre:not(.mermaid) code[class*="language-"]').forEach((el) => hljs.highlightElement(el));
+  }} catch (error) {{
+    console.warn('Syntax highlighting unavailable:', error);
+  }}
   await mermaid.run({{ querySelector: 'pre.mermaid' }});
 {page_js}
 </script>

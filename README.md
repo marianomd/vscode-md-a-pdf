@@ -2,6 +2,13 @@
 
 Exports the open `.md` file to PDF, rendering Mermaid diagrams, using the Edge or Chrome you already have installed.
 
+## Features
+
+- Mermaid diagrams are rendered as drawings.
+- Code blocks with a language (` ```c `, ` ```json `, ` ```python `...) get syntax highlighting. Blocks without a language stay plain.
+- Tables, lists and the rest of regular Markdown.
+- One tall page when the file has diagrams (so they are never cut), A4 pages otherwise.
+
 ## Usage
 
 With a `.md` file open:
@@ -18,7 +25,7 @@ The PDF is written next to the `.md`, with the same name.
 
 - Python 3 with the `markdown` library (`pip install markdown`).
 - Microsoft Edge or Google Chrome.
-- Internet access (Mermaid and the font are loaded from jsdelivr).
+- Internet access (Mermaid, highlight.js and the font are loaded from jsdelivr).
 
 ## Settings
 
@@ -35,7 +42,7 @@ The `.vsix` is not versioned. Build it with the script (it needs neither Node no
 
 ```
 python build_vsix.py
-code --install-extension md-a-pdf-1.0.1.vsix --force
+code --install-extension md-a-pdf-1.0.2.vsix --force
 ```
 
 Then run `Developer: Reload Window`.
