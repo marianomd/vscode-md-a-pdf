@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Convierte un .md a PDF usando el Edge/Chrome ya instalado (sin Docker ni Node).
+"""Beautiful Markdown to PDF: converts a .md file to PDF using the installed Edge/Chrome (no Docker or Node needed).
 
-Uso:
-    python docs/tools/md-a-pdf.py archivo.md [salida.pdf] [--a4 | --tall]
+Usage:
+    python md-a-pdf.py file.md [output.pdf] [--a4 | --tall]
 
-- Los bloques ```mermaid se dibujan (Mermaid se carga desde jsdelivr: requiere internet).
-- Por defecto (auto): si el .md tiene diagramas genera UNA sola página del alto del contenido, para que
-  no se corten; si no tiene, hojas A4. --a4 o --tall fuerzan una u otra.
-- El front-matter YAML (--- ... ---) del .md se ignora.
-Requiere: Python 3, `pip install markdown` y Microsoft Edge o Google Chrome.
+- ```mermaid blocks are rendered (Mermaid is loaded from jsdelivr: internet access required).
+- Default (auto): if the .md has diagrams it produces ONE single page as tall as the content, so they are
+  not split; otherwise A4 pages. --a4 or --tall force one or the other.
+- The YAML front-matter (--- ... ---) of the .md is ignored.
+Requires: Python 3, `pip install markdown` and Microsoft Edge or Google Chrome.
 """
 import html
 import os
@@ -22,7 +22,7 @@ from pathlib import Path
 try:
     import markdown
 except ImportError:
-    sys.exit("Falta la librería markdown. Instalala con: pip install markdown")
+    sys.exit("The markdown library is missing. Install it with: pip install markdown")
 
 MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@12/dist/mermaid.esm.min.mjs"
 FONT_CSS_URLS = [
@@ -64,7 +64,7 @@ def find_browser():
     for path in candidates:
         if path and Path(path).exists():
             return path
-    sys.exit("No encontré Edge ni Chrome. Definí la variable de entorno BROWSER_PATH con la ruta al ejecutable.")
+    sys.exit("Could not find Edge or Chrome. Set the BROWSER_PATH environment variable to the executable path.")
 
 
 def md_to_html_body(text):
@@ -86,7 +86,7 @@ def md_to_html_body(text):
 
 def build_html(body, a4):
     if a4 is None:
-        a4 = 'class="mermaid"' not in body  # sin diagramas: hojas A4; con diagramas: una sola página alta
+        a4 = 'class="mermaid"' not in body  # no diagrams: A4 pages; with diagrams: one tall page
     if a4:
         page_css = "@page { size: A4; margin: 12mm; } pre.mermaid { break-inside: avoid; }"
         body_css = "body { margin: 0; }"
@@ -94,7 +94,7 @@ def build_html(body, a4):
     else:
         page_css = ""
         body_css = f"body {{ width: {PAGE_WIDTH_PX}px; margin: 0; padding: 28px 36px; box-sizing: border-box; }}"
-        # Tras dibujar los diagramas se fija el alto de la hoja al alto del contenido
+        # After the diagrams are drawn, the page height is set to the content height
         page_js = """
   const h = Math.ceil(document.documentElement.scrollHeight) + 2;
   const style = document.createElement('style');
@@ -130,7 +130,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         page = Path(tmp) / "doc.html"
         page.write_text(build_html(md_to_html_body(source.read_text(encoding="utf-8")), a4), encoding="utf-8")
-        profile = Path(tmp) / "profile"  # perfil propio: si Edge ya está abierto, no se cuelga ni se mezcla
+        profile = Path(tmp) / "profile"  # own profile: if Edge is already open it neither hangs nor mixes sessions
         cmd = [
             browser, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
             f"--user-data-dir={profile}", "--virtual-time-budget=20000",
@@ -139,8 +139,8 @@ def main():
         subprocess.run(cmd, check=True, timeout=120, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     if not target.exists():
-        sys.exit("El navegador no generó el PDF.")
-    print(f"PDF generado: {target}")
+        sys.exit("The browser did not generate the PDF.")
+    print(f"PDF generated: {target}")
 
 
 if __name__ == "__main__":

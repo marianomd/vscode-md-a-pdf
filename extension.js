@@ -14,7 +14,7 @@ function outputPath(markdownPath) {
 	return markdownPath.replace(MD_EXTENSION, '.pdf');
 }
 
-// Con pythonPath configurado se usa solo ese; si no, se prueban los lanzadores habituales de Windows y Linux
+// With pythonPath configured only that one is used; otherwise the usual Windows and Linux launchers are tried
 function pythonCandidates(configured) {
 	if (configured) return [{ command: configured, prefix: [] }];
 	return [
@@ -53,7 +53,7 @@ async function convert(scriptPath, markdownPath, pdfPath, config) {
 	if (config.browserPath) env.BROWSER_PATH = config.browserPath;
 	const scriptArgs = [scriptPath, markdownPath, pdfPath, ...layoutFlags(config.layout)];
 
-	let last = { error: new Error('No se encontró Python') };
+	let last = { error: new Error('Python was not found') };
 	for (const candidate of pythonCandidates(config.pythonPath)) {
 		last = await run(candidate.command, [...candidate.prefix, ...scriptArgs], env);
 		if (!(last.error && last.error.code === 'ENOENT')) return last;
@@ -62,22 +62,22 @@ async function convert(scriptPath, markdownPath, pdfPath, config) {
 }
 
 function describeFailure(result) {
-	if (result.timedOut) return 'Tardó más de 2 minutos (¿hay internet para cargar Mermaid?).';
+	if (result.timedOut) return 'It took more than 2 minutes (is there internet access to load Mermaid?).';
 	if (result.error && result.error.code === 'ENOENT') {
-		return 'No encontré Python. Instalalo o configurá "mdAPdf.pythonPath".';
+		return 'Python was not found. Install it or set "mdAPdf.pythonPath".';
 	}
 	if (result.error) return result.error.message;
 	const detail = (result.stderr || result.stdout || '').trim().split(/\r?\n/).slice(-4).join(' ');
-	return detail || `El conversor terminó con código ${result.code}.`;
+	return detail || `The converter exited with code ${result.code}.`;
 }
 
 function activate(context) {
-	const output = vscode.window.createOutputChannel('Markdown a PDF');
+	const output = vscode.window.createOutputChannel('Beautiful Markdown to PDF');
 
 	const exportCommand = vscode.commands.registerCommand('mdAPdf.export', async (arg) => {
 		const uri = arg instanceof vscode.Uri ? arg : (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri);
 		if (!uri || uri.scheme !== 'file' || !MD_EXTENSION.test(uri.fsPath)) {
-			vscode.window.showWarningMessage('Markdown a PDF: abrí un archivo .md y dejá el foco en el editor (no en la vista previa).');
+			vscode.window.showWarningMessage('Beautiful Markdown to PDF: open a .md file and keep the focus in the editor (not in the preview).');
 			return;
 		}
 
@@ -93,27 +93,27 @@ function activate(context) {
 		const pdfPath = outputPath(uri.fsPath);
 
 		const result = await vscode.window.withProgress(
-			{ location: vscode.ProgressLocation.Notification, title: 'Generando PDF...' },
+			{ location: vscode.ProgressLocation.Notification, title: 'Generating PDF...' },
 			() => convert(context.asAbsolutePath('md-a-pdf.py'), uri.fsPath, pdfPath, config)
 		);
 
-		output.appendLine(`[${new Date().toISOString()}] ${uri.fsPath} -> código ${result.code}`);
+		output.appendLine(`[${new Date().toISOString()}] ${uri.fsPath} -> exit code ${result.code}`);
 		if (result.stdout) output.appendLine(result.stdout.trim());
 		if (result.stderr) output.appendLine(result.stderr.trim());
 
 		if (result.code !== 0) {
-			const choice = await vscode.window.showErrorMessage(`Markdown a PDF falló: ${describeFailure(result)}`, 'Ver detalle');
-			if (choice === 'Ver detalle') output.show();
+			const choice = await vscode.window.showErrorMessage(`Beautiful Markdown to PDF failed: ${describeFailure(result)}`, 'Show details');
+			if (choice === 'Show details') output.show();
 			return;
 		}
 
 		if (!settings.get('openAfterExport')) {
-			vscode.window.showInformationMessage(`PDF generado: ${pdfPath}`);
+			vscode.window.showInformationMessage(`PDF generated: ${pdfPath}`);
 			return;
 		}
-		const choice = await vscode.window.showInformationMessage(`PDF generado: ${pdfPath}`, 'Abrir', 'Mostrar en carpeta');
-		if (choice === 'Abrir') await vscode.env.openExternal(vscode.Uri.file(pdfPath));
-		if (choice === 'Mostrar en carpeta') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(pdfPath));
+		const choice = await vscode.window.showInformationMessage(`PDF generated: ${pdfPath}`, 'Open', 'Show in folder');
+		if (choice === 'Open') await vscode.env.openExternal(vscode.Uri.file(pdfPath));
+		if (choice === 'Show in folder') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(pdfPath));
 	});
 
 	context.subscriptions.push(exportCommand, output);

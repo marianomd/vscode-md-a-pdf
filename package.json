@@ -1,9 +1,9 @@
 {
   "name": "md-a-pdf",
-  "displayName": "Markdown a PDF (Mermaid)",
-  "description": "Exporta el .md abierto a PDF con diagramas Mermaid, usando el Edge/Chrome instalado.",
+  "displayName": "Beautiful Markdown to PDF",
+  "description": "Beautiful Markdown to PDF: export the open .md file to PDF with Mermaid diagrams, using the installed Edge/Chrome.",
   "publisher": "local",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "engines": {
     "vscode": "^1.80.0"
@@ -17,7 +17,7 @@
     "commands": [
       {
         "command": "mdAPdf.export",
-        "title": "Markdown a PDF: Exportar",
+        "title": "Beautiful Markdown to PDF: Export",
         "icon": "$(file-pdf)"
       }
     ],
@@ -51,17 +51,17 @@
       ]
     },
     "configuration": {
-      "title": "Markdown a PDF",
+      "title": "Beautiful Markdown to PDF",
       "properties": {
         "mdAPdf.pythonPath": {
           "type": "string",
           "default": "",
-          "description": "Ejecutable de Python. Vacío: prueba python, py -3 y python3. Requiere la librería markdown (pip install markdown)."
+          "description": "Python executable. Empty: tries python, py -3 and python3. Requires the markdown library (pip install markdown)."
         },
         "mdAPdf.browserPath": {
           "type": "string",
           "default": "",
-          "description": "Ruta a msedge.exe o chrome.exe. Vacío: se detecta solo."
+          "description": "Path to msedge.exe or chrome.exe. Empty: detected automatically."
         },
         "mdAPdf.layout": {
           "type": "string",
@@ -71,12 +71,12 @@
             "a4"
           ],
           "default": "auto",
-          "description": "auto: una página alta si el .md tiene diagramas Mermaid, A4 si no. tall: siempre una página alta. a4: siempre hojas A4."
+          "description": "auto: one tall page if the .md has Mermaid diagrams, A4 pages otherwise. tall: always one tall page. a4: always A4 pages."
         },
         "mdAPdf.openAfterExport": {
           "type": "boolean",
           "default": true,
-          "description": "Ofrecer abrir el PDF al terminar."
+          "description": "Offer to open the PDF when it is done."
         }
       }
     }

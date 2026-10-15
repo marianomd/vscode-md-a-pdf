@@ -1,4 +1,4 @@
-# Markdown to PDF (Mermaid)
+# Beautiful Markdown to PDF
 
 Exports the open `.md` file to PDF, rendering Mermaid diagrams, using the Edge or Chrome you already have installed.
 
@@ -7,14 +7,12 @@ Exports the open `.md` file to PDF, rendering Mermaid diagrams, using the Edge o
 With a `.md` file open:
 
 - PDF button in the editor title bar.
-- Right-click in the editor or in the explorer, `Markdown a PDF: Exportar`.
-- `Ctrl+Shift+P`, `Markdown a PDF: Exportar`.
+- Right-click in the editor or in the explorer, `Beautiful Markdown to PDF: Export`.
+- `Ctrl+Shift+P`, `Beautiful Markdown to PDF: Export`.
 - Your own shortcut: add this to `keybindings.json`:
   `{ "key": "ctrl+alt+p", "command": "mdAPdf.export", "when": "editorLangId == markdown" }`.
 
 The PDF is written next to the `.md`, with the same name.
-
-The command and the messages it shows are in Spanish for now.
 
 ## Requirements
 
@@ -37,7 +35,7 @@ The `.vsix` is not versioned. Build it with the script (it needs neither Node no
 
 ```
 python build_vsix.py
-code --install-extension md-a-pdf-1.0.0.vsix --force
+code --install-extension md-a-pdf-1.0.1.vsix --force
 ```
 
 Then run `Developer: Reload Window`.
