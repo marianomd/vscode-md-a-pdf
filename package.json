@@ -1,0 +1,84 @@
+{
+  "name": "md-a-pdf",
+  "displayName": "Markdown a PDF (Mermaid)",
+  "description": "Exporta el .md abierto a PDF con diagramas Mermaid, usando el Edge/Chrome instalado.",
+  "publisher": "local",
+  "version": "1.0.0",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "mdAPdf.export",
+        "title": "Markdown a PDF: Exportar",
+        "icon": "$(file-pdf)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "mdAPdf.export",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "mdAPdf.export",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "mdAPdf.export",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mdAPdf.export",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Markdown a PDF",
+      "properties": {
+        "mdAPdf.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Ejecutable de Python. Vacío: prueba python, py -3 y python3. Requiere la librería markdown (pip install markdown)."
+        },
+        "mdAPdf.browserPath": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta a msedge.exe o chrome.exe. Vacío: se detecta solo."
+        },
+        "mdAPdf.layout": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "tall",
+            "a4"
+          ],
+          "default": "auto",
+          "description": "auto: una página alta si el .md tiene diagramas Mermaid, A4 si no. tall: siempre una página alta. a4: siempre hojas A4."
+        },
+        "mdAPdf.openAfterExport": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ofrecer abrir el PDF al terminar."
+        }
+      }
+    }
+  }
+}
