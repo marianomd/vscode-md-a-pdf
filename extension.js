@@ -61,6 +61,21 @@ async function convert(scriptPath, markdownPath, pdfPath, config) {
 	return last;
 }
 
+// Opens a file with the system default app. vscode.env.openExternal fails (0x2) with non-ASCII paths such as "Guía.pdf"
+function openFile(filePath, platform = process.platform) {
+	const launchers = {
+		win32: ['explorer.exe', [filePath]],
+		darwin: ['open', [filePath]],
+	};
+	const [command, args] = launchers[platform] || ['xdg-open', [filePath]];
+	return new Promise((resolve) => {
+		const child = childProcess.spawn(command, args, { detached: true, stdio: 'ignore' });
+		child.once('error', (error) => resolve(error));
+		child.once('spawn', () => resolve(null));
+		if (child.unref) child.unref();
+	});
+}
+
 function describeFailure(result) {
 	if (result.timedOut) return 'It took more than 2 minutes (is there internet access to load Mermaid?).';
 	if (result.error && result.error.code === 'ENOENT') {
@@ -112,7 +127,10 @@ function activate(context) {
 			return;
 		}
 		const choice = await vscode.window.showInformationMessage(`PDF generated: ${pdfPath}`, 'Open', 'Show in folder');
-		if (choice === 'Open') await vscode.env.openExternal(vscode.Uri.file(pdfPath));
+		if (choice === 'Open') {
+			const openError = await openFile(pdfPath);
+			if (openError) vscode.window.showErrorMessage(`Could not open the PDF: ${openError.message}`);
+		}
 		if (choice === 'Show in folder') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(pdfPath));
 	});
 
@@ -121,4 +139,4 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, layoutFlags, outputPath, pythonCandidates, convert, describeFailure };
+module.exports = { activate, deactivate, layoutFlags, outputPath, pythonCandidates, convert, describeFailure, openFile };

@@ -8,7 +8,7 @@ const { EventEmitter } = require('node:events');
 const registered = {};
 const messages = [];
 let nextChoice;
-const calls = { spawn: [], opened: [] };
+const calls = { spawn: [], launched: [], opened: [] };
 
 const fakeVscode = {
 	Uri: class Uri {
@@ -41,14 +41,22 @@ Module._load = function (request, ...rest) {
 	return realLoad.call(this, request, ...rest);
 };
 
-// Fake spawn: `python` does not exist (ENOENT), `py` works, and failing.md makes the converter fail
+// Fake spawn: `python` does not exist (ENOENT), `py` works, failing.md makes the converter fail,
+// and the file launchers (explorer.exe, open, xdg-open) just start
+const LAUNCHERS = ['explorer.exe', 'open', 'xdg-open'];
 const childProcess = require('node:child_process');
 childProcess.spawn = (command, args) => {
-	calls.spawn.push([command, ...args]);
 	const child = new EventEmitter();
 	child.stdout = new EventEmitter();
 	child.stderr = new EventEmitter();
 	child.kill = () => {};
+	child.unref = () => {};
+	if (LAUNCHERS.includes(command)) {
+		calls.launched.push([command, ...args]);
+		setImmediate(() => child.emit('spawn'));
+		return child;
+	}
+	calls.spawn.push([command, ...args]);
 	setImmediate(() => {
 		if (command === 'python') {
 			const error = new Error('spawn python ENOENT');
@@ -97,8 +105,23 @@ const extension = require(path.join(__dirname, '..', 'extension.js'));
 	assert.strictEqual(calls.spawn[1][3], 'C:\\docs\\guide.md');
 	assert.strictEqual(calls.spawn[1][4], 'C:\\docs\\guide.pdf');
 	assert.strictEqual(messages.at(-1)[0], 'info');
-	assert.deepStrictEqual(calls.opened, ['C:\\docs\\guide.pdf']);
-	console.log('OK   conversion: python (ENOENT) -> py -3, notifies and opens the PDF');
+	console.log('OK   conversion: python (ENOENT) -> py -3, notifies');
+
+	// "Open" must use the system launcher, never vscode.env.openExternal (it fails with accents)
+	assert.deepStrictEqual(calls.launched, [['xdg-open', 'C:\\docs\\guide.pdf']]);
+	assert.deepStrictEqual(calls.opened, []);
+	console.log('OK   Open button uses the system launcher, not openExternal');
+
+	calls.launched.length = 0;
+	await extension.openFile('C:\\docs\\Guía de integración.pdf', 'win32');
+	await extension.openFile('/docs/Guía de integración.pdf', 'darwin');
+	await extension.openFile('/docs/Guía de integración.pdf', 'linux');
+	assert.deepStrictEqual(calls.launched, [
+		['explorer.exe', 'C:\\docs\\Guía de integración.pdf'],
+		['open', '/docs/Guía de integración.pdf'],
+		['xdg-open', '/docs/Guía de integración.pdf'],
+	]);
+	console.log('OK   launchers per platform, path with accents and spaces passed as one argument');
 
 	await registered['mdAPdf.export'](new fakeVscode.Uri('C:\\docs\\failing.md'));
 	assert.strictEqual(messages.at(-1)[0], 'error');
