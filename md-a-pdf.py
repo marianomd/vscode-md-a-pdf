@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 try:
@@ -128,6 +129,19 @@ def build_html(body, a4):
 """
 
 
+def wait_for_file(path, timeout):
+    """Waits until `path` exists and its size stops changing (the browser may still be writing it)."""
+    deadline = time.monotonic() + timeout
+    last_size = -1
+    while time.monotonic() < deadline:
+        size = path.stat().st_size if path.exists() else -1
+        if size > 0 and size == last_size:
+            return True
+        last_size = size
+        time.sleep(0.5)
+    return False
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     a4 = True if "--a4" in sys.argv else False if "--tall" in sys.argv else None
@@ -138,19 +152,24 @@ def main():
     target = Path(args[1]).resolve() if len(args) > 1 else source.with_suffix(".pdf")
     browser = find_browser()
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         page = Path(tmp) / "doc.html"
         page.write_text(build_html(md_to_html_body(source.read_text(encoding="utf-8")), a4), encoding="utf-8")
         profile = Path(tmp) / "profile"  # own profile: if Edge is already open it neither hangs nor mixes sessions
+        rendered = Path(tmp) / "out.pdf"  # temp output: an old PDF at the target can't be mistaken for the new one
         cmd = [
             browser, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
             f"--user-data-dir={profile}", "--virtual-time-budget=20000",
-            f"--print-to-pdf={target}", page.as_uri(),
+            f"--print-to-pdf={rendered}", page.as_uri(),
         ]
-        subprocess.run(cmd, check=True, timeout=120, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    if not target.exists():
-        sys.exit("The browser did not generate the PDF.")
+        # Recent Edge versions hand the work to another process and return right away, so the PDF is awaited, not the process.
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not wait_for_file(rendered, timeout=120):
+            sys.exit("The browser did not generate the PDF.")
+        try:
+            shutil.copyfile(rendered, target)
+        except PermissionError:
+            sys.exit(f"Cannot write {target}: is it open in a PDF viewer?")
     print(f"PDF generated: {target}")
 
 

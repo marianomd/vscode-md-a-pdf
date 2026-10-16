@@ -42,7 +42,7 @@ The `.vsix` is not versioned. Build it with the script (it needs neither Node no
 
 ```
 python build_vsix.py
-code --install-extension md-a-pdf-1.0.3.vsix --force
+code --install-extension md-a-pdf-1.0.4.vsix --force
 ```
 
 Then run `Developer: Reload Window`.

@@ -3,7 +3,7 @@
   "displayName": "Beautiful Markdown to PDF",
   "description": "Beautiful Markdown to PDF: export the open .md file to PDF with Mermaid diagrams, using the installed Edge/Chrome.",
   "publisher": "local",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "engines": {
     "vscode": "^1.80.0"
