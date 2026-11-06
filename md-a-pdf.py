@@ -8,6 +8,7 @@ Usage:
 - Code blocks with a language (```c, ```json...) get syntax highlighting (highlight.js, also from jsdelivr).
 - Default (auto): if the .md has diagrams it produces ONE single page as tall as the content, so they are
   not split; otherwise A4 pages. --a4 or --tall force one or the other.
+- A4 pages show a "Página N de M" footer. Relative image paths are resolved from the .md folder.
 - The YAML front-matter (--- ... ---) of the .md is ignored.
 Requires: Python 3, `pip install markdown` and Microsoft Edge or Google Chrome.
 """
@@ -47,6 +48,7 @@ CSS = """
   code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 90%; }
   pre code { background: none; padding: 0; }
   pre code.hljs { background: transparent; padding: 0; }
+  img { max-width: 100%; max-height: 135mm; width: auto; height: auto; }
   table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
   th, td { border: 1px solid #bbb; padding: 6px 10px; text-align: left; vertical-align: top; }
   th { background: #f0f0f0; }
@@ -89,11 +91,23 @@ def md_to_html_body(text):
     return body
 
 
-def build_html(body, a4):
+def build_html(body, a4, base_uri=""):
     if a4 is None:
         a4 = 'class="mermaid"' not in body  # no diagrams: A4 pages; with diagrams: one tall page
     if a4:
-        page_css = "@page { size: A4; margin: 12mm; } pre.mermaid { break-inside: avoid; }"
+        page_css = """
+@page {
+  size: A4;
+  margin: 12mm;
+  @bottom-center {
+    content: "Página " counter(page) " de " counter(pages);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    color: #666;
+  }
+}
+pre.mermaid { break-inside: avoid; }
+"""
         body_css = "body { margin: 0; }"
         page_js = ""
     else:
@@ -107,8 +121,10 @@ def build_html(body, a4):
   document.head.appendChild(style);
 """ % PAGE_WIDTH_PX
     fonts = "".join(f'<link rel="stylesheet" href="{url}">' for url in STYLESHEET_URLS)
+    # The base URI lets relative image paths resolve from the Markdown folder (the HTML is written to a temp folder)
+    base = f'<base href="{html.escape(base_uri)}">' if base_uri else ""
     return f"""<!doctype html>
-<html lang="es"><head><meta charset="utf-8">{fonts}
+<html lang="es"><head><meta charset="utf-8">{base}{fonts}
 <style>{CSS}{body_css}{page_css}</style></head><body>
 {body}
 <script type="module">
@@ -154,7 +170,8 @@ def main():
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         page = Path(tmp) / "doc.html"
-        page.write_text(build_html(md_to_html_body(source.read_text(encoding="utf-8")), a4), encoding="utf-8")
+        base_uri = source.parent.as_uri().rstrip("/") + "/"
+        page.write_text(build_html(md_to_html_body(source.read_text(encoding="utf-8")), a4, base_uri), encoding="utf-8")
         profile = Path(tmp) / "profile"  # own profile: if Edge is already open it neither hangs nor mixes sessions
         rendered = Path(tmp) / "out.pdf"  # temp output: an old PDF at the target can't be mistaken for the new one
         cmd = [
