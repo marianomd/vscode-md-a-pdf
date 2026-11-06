@@ -91,7 +91,7 @@ def md_to_html_body(text):
     return body
 
 
-def build_html(body, a4, base_uri=""):
+def build_html(body, a4, base_uri="", title=""):
     if a4 is None:
         a4 = 'class="mermaid"' not in body  # no diagrams: A4 pages; with diagrams: one tall page
     if a4:
@@ -124,7 +124,7 @@ pre.mermaid { break-inside: avoid; }
     # The base URI lets relative image paths resolve from the Markdown folder (the HTML is written to a temp folder)
     base = f'<base href="{html.escape(base_uri)}">' if base_uri else ""
     return f"""<!doctype html>
-<html lang="es"><head><meta charset="utf-8">{base}{fonts}
+<html lang="es"><head><meta charset="utf-8"><title>{html.escape(title)}</title>{base}{fonts}
 <style>{CSS}{body_css}{page_css}</style></head><body>
 {body}
 <script type="module">
@@ -171,7 +171,11 @@ def main():
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         page = Path(tmp) / "doc.html"
         base_uri = source.parent.as_uri().rstrip("/") + "/"
-        page.write_text(build_html(md_to_html_body(source.read_text(encoding="utf-8")), a4, base_uri), encoding="utf-8")
+        text = source.read_text(encoding="utf-8")
+        # The PDF title comes from the first H1 (or the file name); without <title> the viewer shows "doc.html"
+        heading = re.search(r"^#[ \t]+(.+?)[ \t#]*$", text, flags=re.M)
+        title = heading.group(1) if heading else source.stem
+        page.write_text(build_html(md_to_html_body(text), a4, base_uri, title), encoding="utf-8")
         profile = Path(tmp) / "profile"  # own profile: if Edge is already open it neither hangs nor mixes sessions
         rendered = Path(tmp) / "out.pdf"  # temp output: an old PDF at the target can't be mistaken for the new one
         cmd = [
